@@ -1,5 +1,5 @@
-
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Image, Upload } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface FormData {
   // Physical dimensions
@@ -33,9 +34,11 @@ interface FormData {
   climaticRequirements: string;
   // Photo
   photo: File | null;
+  hasPhoto: boolean;
 }
 
 const WindowQuestionnaire = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<FormData>({
     width: '',
     height: '',
@@ -53,11 +56,11 @@ const WindowQuestionnaire = () => {
     profileType: 'pvc',
     installationLocation: 'indoor',
     climaticRequirements: '',
-    photo: null
+    photo: null,
+    hasPhoto: false
   });
 
   const [previewUrl, setPreviewUrl] = useState<string>('');
-  const [showResults, setShowResults] = useState(false);
 
   const handleInputChange = (field: keyof FormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -74,7 +77,7 @@ const WindowQuestionnaire = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setShowResults(true);
+    navigate('/results', { state: { formData } });
   };
 
   return (
@@ -82,6 +85,25 @@ const WindowQuestionnaire = () => {
       <h1 className="text-3xl font-bold text-center mb-8">Window Specifications Questionnaire</h1>
       
       <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Type Selection */}
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold mb-4">📋 Questionnaire Type</h2>
+          <RadioGroup
+            value={formData.hasPhoto ? "with-photo" : "without-photo"}
+            onValueChange={(value) => handleInputChange('hasPhoto', value === "with-photo")}
+            className="flex flex-col space-y-2"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="without-photo" id="without-photo" />
+              <Label htmlFor="without-photo">Parameters Only</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="with-photo" id="with-photo" />
+              <Label htmlFor="with-photo">Include Photo Upload</Label>
+            </div>
+          </RadioGroup>
+        </Card>
+
         {/* Physical Dimensions */}
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-4">📏 Physical Dimensions</h2>
@@ -350,57 +372,37 @@ const WindowQuestionnaire = () => {
           </div>
         </Card>
 
-        {/* Photo Upload */}
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">📸 Photo Upload</h2>
-          <div className="space-y-4">
-            <div className="flex items-center justify-center w-full">
-              <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <Upload className="w-8 h-8 mb-4 text-gray-500" />
-                  <p className="mb-2 text-sm text-gray-500">
-                    <span className="font-semibold">Click to upload</span> or drag and drop
-                  </p>
-                </div>
-                <input
-                  type="file"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                />
-              </label>
-            </div>
-            {previewUrl && (
-              <div className="mt-4">
-                <img src={previewUrl} alt="Preview" className="max-h-64 mx-auto rounded-lg" />
-              </div>
-            )}
-          </div>
-        </Card>
-
-        <Button type="submit" className="w-full">Calculate Results</Button>
-
-        {/* Results Section */}
-        {showResults && (
+        {/* Photo Upload - Only show if hasPhoto is true */}
+        {formData.hasPhoto && (
           <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Results</h2>
+            <h2 className="text-xl font-semibold mb-4">📸 Photo Upload</h2>
             <div className="space-y-4">
-              <div className="text-lg">
-                <p>Estimated Price: $2,500 - $3,000</p>
-                <p className="text-sm text-gray-500 mt-2">* This is a sample price range</p>
+              <div className="flex items-center justify-center w-full">
+                <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <Upload className="w-8 h-8 mb-4 text-gray-500" />
+                    <p className="mb-2 text-sm text-gray-500">
+                      <span className="font-semibold">Click to upload</span> or drag and drop
+                    </p>
+                  </div>
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                  />
+                </label>
               </div>
-              <Separator />
-              <div className="mt-4">
-                <h3 className="font-semibold mb-2">Sample Product Image</h3>
-                <img 
-                  src="https://images.unsplash.com/photo-1488590528505-98d2b5aba04b" 
-                  alt="Sample Window" 
-                  className="w-full max-w-md mx-auto rounded-lg"
-                />
-              </div>
+              {previewUrl && (
+                <div className="mt-4">
+                  <img src={previewUrl} alt="Preview" className="max-h-64 mx-auto rounded-lg" />
+                </div>
+              )}
             </div>
           </Card>
         )}
+
+        <Button type="submit" className="w-full">Calculate Results</Button>
       </form>
     </div>
   );
